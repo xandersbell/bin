@@ -1,34 +1,63 @@
-# MacOS Personal Bin Tools
+# 🚀 MacOS Personal Bin Ecosystem
 
-A curated collection of shell utilities enhanced with `gum` for a premium TUI experience on MacOS.
+A premium, one-stop management repository for personal shell utilities on MacOS, meticulously designed for AI agents and human developers.
 
-## 🚀 Pinchtab Toolchain
-
-Modern interactive browser automation bridge for AI agents.
-
-### Core Utilities
-- **`pinchtab/pinchtab-launch [profile]`**: 
-  Launches a managed browser instance. Supports auto-creation of profiles and automatic port mapping for `general`, `ask`, and `youtube`.
-- **`pinchtab/pinchtab-cleanup`**: 
-  Interactive TUI utility to safely terminate running instances (supports multi-select or global kill).
-
-### Service Shorthands
-Directly control specific instances using environment-aware redirects:
-- **`pinchtab/pinchtab-general`**: Controls the `general` instance (Port 19950).
-- **`pinchtab/pinchtab-ask`**: Controls the `ask` instance (Port 19951).
-- **`pinchtab/pinchtab-youtube`**: Controls the `youtube` instance (Port 19952).
+## 🌟 Mission
+To provide a standardized, interactive, and high-performance environment for personal scripts, leveraging modern TUI tools and system-level integrations.
 
 ---
 
-## 🛠 Developer Utilities
+## 🏁 Quick Start: Initialization
 
-- **`echotest`**: Premium TUI argument visualizer using `gum` styling.
-- **`setup.sh`**: Automated dependency installer (Homebrew, Gum).
+Before using any of the tools, you **must** run the setup script to initialize the environment:
+
+```bash
+bash setup.sh
+```
+
+**What `setup.sh` does:**
+1.  **Dependency Check:** Installs `homebrew` and `gum` if missing.
+2.  **Interactive Configuration:** Detects current tool subdirectories.
+3.  **Path Management:** Interactive multi-select TUI to inject chosen directories into `/etc/paths.d/` for global terminal access.
+
+---
+
+## 🦊 PinchTab Toolchain Design
+
+The repository features a robust, environment-aware suite for [PinchTab](https://pinchtab.com) management.
+
+### 1. Launch & Provisioning (`pinchtab/pinchtab-launch`)
+The "smart switch" for your browser instances. 
+- **Auto-Provisioning:** Automatically creates and initializes profiles via the PinchTab API if they don't exist.
+- **Conflict Prevention:** Pre-checks ports before launching to prevent 409 errors.
+- **UI Context:** Dynamic coloring (Cyan for General, Purple for Ask, Red for YouTube).
+
+### 2. Service Shorthands & Profile Designs
+Directly control specific instances using environment-aware redirects. Each profile is optimized for specific workloads:
+- **`pinchtab/pinchtab-general`** (Port 19950):
+  General-purpose browsing and administrative tasks.
+- **`pinchtab/pinchtab-ask`** (Port 19951):
+  Dedicated environment for AI-powered asking/answering tools including **ChatGPT**, **Anthropic**, **Gemini**, and **Perplexity**.
+- **`pinchtab/pinchtab-youtube`** (Port 19952):
+  Optimized for **YouTube** automation, leveraging logged-in Google accounts specifically for **YouTube Premium** features.
+
+### 3. Cleanup & Management (`pinchtab/pinchtab-cleanup`)
+An interactive dashboard to manage active sessions:
+- List all active instances with IDs and Port numbers.
+- **Selective Kill:** Choose specific instances to terminology.
+- **Global Reset:** Stop all active PinchTab sessions in one click.
+
+---
+
+## 🛠 Developer & Debugging Tools
+
+- **`echotest`**: A visual demonstration of `gum` capabilities, showing how to style arguments and help messages.
 
 ## 📋 Requirements
 - [Homebrew](https://brew.sh/)
-- [gum](https://github.com/charmbracelet/gum)
+- [gum](https://github.com/charmbracelet/gum) (Managed by `setup.sh`)
 - [jq](https://stedolan.github.io/jq/)
 
 ---
-*Maintained under the AGENTS.md Constitution.*
+> [!NOTE]
+> All scripts follow the **AGENTS.md** constitution, ensuring English-only UI, documentation, and logic comments for maximum cross-compatibility and agent legibility.

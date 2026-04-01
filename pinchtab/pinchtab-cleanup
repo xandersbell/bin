@@ -9,7 +9,7 @@ gum style \
     --border-foreground "#FFD700" \
     --border double \
     --align center \
-    --width 54 \
+    --width 68 \
     --margin "1 2" \
     "" "🧹 Pinchtab Instance Cleanup" "Advanced TUI Utility" ""
 

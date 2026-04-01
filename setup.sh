@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Constitutional Rules Compliance (AGENTS.md)
-# Get current local time: $(date "+%Y-%m-%d %H:%M:%S %Z")
-
 # 1. Check and install gum (Charmbracelet TUI tool)
 if ! command -v gum &> /dev/null; then
     echo "gum is not installed. Attempting to install via Homebrew..."
@@ -22,8 +19,6 @@ if ! command -v gum &> /dev/null; then
         echo "Error: Failed to install gum."
         exit 1
     fi
-else
-    echo "gum is already installed at $(which gum)."
 fi
 
 # 2. Identity & Directory Detection
@@ -31,6 +26,7 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # We prefer the actual user even if the script is run with sudo
 ACTUAL_USER="${SUDO_USER:-$(whoami)}"
+TARGET_FILE="/etc/paths.d/${ACTUAL_USER}-bin"
 
 # Banner
 gum style \
@@ -39,12 +35,20 @@ gum style \
     --border-foreground "#00D7D7" \
     --padding "1 2" \
     --align center \
+    --width 68 \
     --margin "1 0" \
     "📍 System Bin Initialization" \
     "Script Source: $SCRIPT_DIR" \
     "Target User: $ACTUAL_USER"
 
-# 3. Scanning Subdirectories
+# 3. Check Existing Configuration
+if [ -f "$TARGET_FILE" ]; then
+    gum style --foreground "#AF87FF" --bold --width 68 --align center "Current PATH Configuration ($TARGET_FILE):"
+    gum style --foreground "#7A5FFF" --border rounded --padding "0 2" --width 68 "$(cat "$TARGET_FILE")"
+    echo ""
+fi
+
+# 4. Scanning Subdirectories
 # We ignore hidden directories (starting with .)
 SUBDIRS=()
 while IFS='' read -r line; do SUBDIRS+=("$line"); done < <(find "$SCRIPT_DIR" -maxdepth 1 -type d -not -path "$SCRIPT_DIR" -not -path '*/.*' -exec basename {} \;)
@@ -71,7 +75,6 @@ for dir in $SELECTED; do
 done
 
 # 6. Secure write to /etc/paths.d/
-TARGET_FILE="/etc/paths.d/${ACTUAL_USER}-bin"
 
 gum style --foreground "#00D7D7" --bold "Attempting to write to $TARGET_FILE..."
 gum style --foreground "#7A5FFF" "Note: You might be prompted for your sudo password."
@@ -86,6 +89,7 @@ if [ $? -eq 0 ]; then
         --border-foreground "#00FF7F" \
         --padding "1 2" \
         --align center \
+        --width 68 \
         --margin "1 0" \
         "✅ PATH CONFIGURATION SUCCESSFUL" \
         "Created: $TARGET_FILE" \
