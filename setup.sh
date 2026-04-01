@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# Check and install gum (Charmbracelet TUI tool)
+# Constitutional Rules Compliance (AGENTS.md)
+# Get current local time: $(date "+%Y-%m-%d %H:%M:%S %Z")
+
+# 1. Check and install gum (Charmbracelet TUI tool)
 if ! command -v gum &> /dev/null; then
     echo "gum is not installed. Attempting to install via Homebrew..."
 
@@ -23,5 +26,72 @@ else
     echo "gum is already installed at $(which gum)."
 fi
 
-# Example: Use gum to confirm setup completion
-gum style --foreground 212 --border-foreground 212 --border double --align center --width 40 "Setup environment is ready!"
+# 2. Identity & Directory Detection
+# We use BASH_SOURCE to find where this script lives
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# We prefer the actual user even if the script is run with sudo
+ACTUAL_USER="${SUDO_USER:-$(whoami)}"
+
+# Banner
+gum style \
+    --foreground "#00D7D7" \
+    --border rounded \
+    --border-foreground "#00D7D7" \
+    --padding "1 2" \
+    --align center \
+    --margin "1 0" \
+    "📍 System Bin Initialization" \
+    "Script Source: $SCRIPT_DIR" \
+    "Target User: $ACTUAL_USER"
+
+# 3. Scanning Subdirectories
+# We ignore hidden directories (starting with .)
+SUBDIRS=()
+while IFS='' read -r line; do SUBDIRS+=("$line"); done < <(find "$SCRIPT_DIR" -maxdepth 1 -type d -not -path "$SCRIPT_DIR" -not -path '*/.*' -exec basename {} \;)
+
+if [ ${#SUBDIRS[@]} -eq 0 ]; then
+    gum style --foreground "#EAB308" "⚠️  No valid subdirectories found in $SCRIPT_DIR."
+    exit 0
+fi
+
+# 4. Interactive Selection
+echo "$(gum style --foreground "#AF87FF" "Pick subdirectories to add to your system PATH (Space to toggle, Enter to confirm):")"
+SELECTED=$(printf "%s\n" "${SUBDIRS[@]}" | gum choose --no-limit)
+
+if [ -z "$SELECTED" ]; then
+    gum style --foreground "#FF4B4B" "❌ No options selected. Operation cancelled."
+    exit 0
+fi
+
+# 5. Preparing Path File Content
+# Each selected directory will be converted to an absolute path
+PATH_CONTENT=""
+for dir in $SELECTED; do
+    PATH_CONTENT="${PATH_CONTENT}${SCRIPT_DIR}/${dir}\n"
+done
+
+# 6. Secure write to /etc/paths.d/
+TARGET_FILE="/etc/paths.d/${ACTUAL_USER}-bin"
+
+gum style --foreground "#00D7D7" --bold "Attempting to write to $TARGET_FILE..."
+gum style --foreground "#7A5FFF" "Note: You might be prompted for your sudo password."
+
+# Use printf and sudo tee to handle newlines correctly and write to protected location
+printf "$PATH_CONTENT" | sudo tee "$TARGET_FILE" > /dev/null
+
+if [ $? -eq 0 ]; then
+    gum style \
+        --foreground "#00FF7F" \
+        --border rounded \
+        --border-foreground "#00FF7F" \
+        --padding "1 2" \
+        --align center \
+        --margin "1 0" \
+        "✅ PATH CONFIGURATION SUCCESSFUL" \
+        "Created: $TARGET_FILE" \
+        "" \
+        "Please RESTART your terminal session" \
+        "or run: source /etc/profile"
+else
+    gum style --foreground "#FF4B4B" --bold "❌ Failed to write path configuration. Please check your permissions."
+fi
