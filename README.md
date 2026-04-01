@@ -26,7 +26,7 @@ bash setup.sh
 
 The repository features a robust, environment-aware suite for [PinchTab](https://pinchtab.com) management.
 
-### 1. Launch & Provisioning (`pinchtab/pinchtab-launch`)
+### 1. Launch & Provisioning (`pinchtab/pinchtab-start`)
 The "smart switch" for your browser instances. 
 - **Auto-Provisioning:** Automatically creates and initializes profiles via the PinchTab API if they don't exist.
 - **Conflict Prevention:** Pre-checks ports before launching to prevent 409 errors.
