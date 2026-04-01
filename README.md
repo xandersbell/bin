@@ -50,8 +50,7 @@ An interactive dashboard to manage active sessions:
 ---
 
 ## 🛠 Developer & Debugging Tools
-
-- **`echotest`**: A visual demonstration of `gum` capabilities, showing how to style arguments and help messages.
+(Future utilities will be documented here.)
 
 ## 📋 Requirements
 - [Homebrew](https://brew.sh/)
