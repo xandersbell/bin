@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Constitutional Rules Compliance (AGENTS.md)
+# Get current local time: $(date "+%Y-%m-%d %H:%M:%S %Z")
+
+# Profile Argument (Defaults to 'general')
+PROFILE=${1:-general}
+
+# Define Mapped Ports and UI Styles
+# general -> 19950 (Cyan), ask -> 19951 (Purple), youtube -> 19952 (Red)
+PORT=""
+COLOR="#AF87FF" # Default Slate/Purple for dynamic profiles
+ICON="🌐"
+
+case "$PROFILE" in
+    "general")
+        PORT="19950"
+        COLOR="#00D7D7" # Cyan
+        ICON="🚀"
+        ;;
+    "ask")
+        PORT="19951"
+        COLOR="#8A2BE2" # BlueViolet/Purple
+        ICON="🧠"
+        ;;
+    "youtube")
+        PORT="19952"
+        COLOR="#FF4B4B" # Red
+        ICON="📺"
+        ;;
+esac
+
+# 1. Profile Existence Pre-check & Auto-creation
+# We fetch the profiles list once to avoid redundant network calls
+PROFILES_JSON=$(pinchtab profiles 2>/dev/null)
+PROFILE_EXISTS=$(echo "$PROFILES_JSON" | jq -r ".[] | select(.name==\"$PROFILE\") | .name" 2>/dev/null)
+
+if [ -z "$PROFILE_EXISTS" ]; then
+    # Extract API Token for authenticated request
+    TOKEN=$(jq -r '.server.token' ~/.pinchtab/config.json 2>/dev/null)
+    
+    # Use 'dot' instead of incorrect 'dots' for gum spinner
+    gum spin --spinner "dot" --title "Initializing new profile: $PROFILE..." -- \
+    curl -s -f -X POST http://127.0.0.1:9867/profiles \
+         -H "Content-Type: application/json" \
+         -H "Authorization: Bearer $TOKEN" \
+         -d "{\"name\": \"$PROFILE\"}" > /dev/null
+    
+    if [ $? -ne 0 ]; then
+        gum style --foreground "#FF4B4B" --bold "Error: Failed to create profile '$PROFILE' via Pinchtab API." "Ensure Pinchtab server is running and token in config.json is valid."
+        exit 1
+    fi
+    gum style --foreground "#00FF7F" "✅ Profile '$PROFILE' created successfully."
+fi
+
+# 2. Port Conflict Pre-check (Only for mapped profiles)
+if [ -n "$PORT" ]; then
+    # Query instances and suppress internal pinchtab warnings
+    IS_PORT_BUSY=$(pinchtab instances 2>/dev/null | jq -r ".[] | select(.port==\"$PORT\") | .id" 2>/dev/null)
+    
+    if [ -n "$IS_PORT_BUSY" ]; then
+        gum style \
+            --foreground "#EAB308" \
+            --border-foreground "#EAB308" \
+            --border rounded \
+            --padding "1 2" \
+            --align center \
+            --width 54 \
+            --margin "1 0" \
+            "⚠️  PORT CONFLICT DETECTED" \
+            "Profile: $PROFILE | Port: $PORT" \
+            "Already used by: $IS_PORT_BUSY" \
+            "Please run 'pinchtab-cleanup' to reset."
+        exit 0
+    fi
+fi
+
+# 3. Display Launch Banner with dynamic colors and icons
+gum style \
+    --foreground "$COLOR" \
+    --border rounded \
+    --border-foreground "$COLOR" \
+    --align center \
+    --width 54 \
+    --margin "1 2" \
+    "" "$ICON Launching Pinchtab Instance" "Profile: $PROFILE | Port: ${PORT:-Dynamic}" ""
+
+# 4. Initialization Spinner
+gum spin --spinner "pulse" --title "Pinchtab is initializing $PROFILE..." -- sleep 0.5
+
+# 5. Start the Instance
+if [ -n "$PORT" ]; then
+    pinchtab instance start --profile "$PROFILE" --mode headed --port "$PORT"
+else
+    pinchtab instance start --profile "$PROFILE" --mode headed
+fi
+
+# 6. Post-launch Check
+RET=$?
+if [ $RET -ne 0 ]; then
+    gum style --foreground "#FF4B4B" --bold "Error: Pinchtab failed to launch correctly (Status: $RET)"
+    exit $RET
+fi

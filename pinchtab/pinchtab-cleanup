@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Constitutional Rules Compliance (AGENTS.md)
+# Get current local time: $(date "+%Y-%m-%d %H:%M:%S %Z")
+
+# Stylish Header for Cleanup Utility
+gum style \
+    --foreground "#FFD700" \
+    --border-foreground "#FFD700" \
+    --border double \
+    --align center \
+    --width 54 \
+    --margin "1 2" \
+    "" "🧹 Pinchtab Instance Cleanup" "Advanced TUI Utility" ""
+
+# Start a loop to allow multiple individual cleanups
+while true; do
+    # Fetch active instances and suppress warnings
+    INSTANCES_JSON=$(gum spin --spinner "pulse" --title "Fetching active instances..." -- pinchtab instances 2>/dev/null)
+
+    # Parse IDs and Ports using jq
+    DISPLAY_LIST=$(echo "$INSTANCES_JSON" | jq -r '.[] | "\(.id) (Port: \(.port))"' 2>/dev/null)
+    RAW_IDS=$(echo "$INSTANCES_JSON" | jq -r '.[].id' 2>/dev/null)
+
+    # Check if any instances are running
+    if [ -z "$RAW_IDS" ] || [ "$RAW_IDS" == "null" ]; then
+        gum style --foreground "#00D7D7" "No more active Pinchtab instances found."
+        exit 0
+    fi
+
+    # Construct the menu (removing --no-limit for better single-select menu interaction)
+    MENU_OPTIONS=$(printf "Stop ALL running instances\n%s\nExit" "$DISPLAY_LIST")
+
+    # Interactive Selection - Single Select mode is more intuitive for a menu
+    SELECTION=$(echo "$MENU_OPTIONS" | gum choose --header "Pick an instance to stop or choose an action:")
+
+    # Processing logic
+    if [ -z "$SELECTION" ] || [ "$SELECTION" == "Exit" ]; then
+        gum style "Exiting Cleanup Utility."
+        exit 0
+    fi
+
+    # Handle Global Kill
+    if [ "$SELECTION" == "Stop ALL running instances" ]; then
+        if gum confirm "Are you sure you want to kill ALL running instances?"; then
+            echo "$RAW_IDS" | while read -r id; do
+                gum spin --spinner "monkey" --title "Stopping $id..." -- pinchtab instance stop "$id"
+                gum style --foreground "#00FF7F" "✅ $id stopped."
+            done
+            gum style --foreground "#FFD700" --bold "Global cleanup complete."
+            exit 0
+        fi
+        continue # Return to menu if global kill was cancelled
+    fi
+
+    # Handle specific individual instance
+    ID=$(echo "$SELECTION" | cut -d' ' -f1)
+    if [[ "$ID" == inst_* ]]; then
+        gum spin --spinner "dots" --title "Terminating $ID..." -- pinchtab instance stop "$ID"
+        gum style --foreground "#00FF7F" "✅ $ID terminated."
+        sleep 0.5 # Brief pause for visual feedback
+    fi
+done
