@@ -1,1 +1,3 @@
-# bin
+# Personal bin for MacOS
+
+...
