@@ -56,8 +56,12 @@ while true; do
     # Handle specific individual instance
     ID=$(echo "$SELECTION" | cut -d' ' -f1)
     if [[ "$ID" == inst_* ]]; then
-        gum spin --spinner "dots" --title "Terminating $ID..." -- pinchtab instance stop "$ID"
-        gum style --foreground "#00FF7F" "✅ $ID terminated."
-        sleep 0.5 # Brief pause for visual feedback
+        gum spin --spinner "dot" --title "Terminating $ID..." -- pinchtab instance stop "$ID"
+        if [ $? -eq 0 ]; then
+            gum style --foreground "#00FF7F" "✅ $ID terminated."
+        else
+            gum style --foreground "#FF4B4B" "❌ Failed to stop $ID."
+        fi
+        sleep 0.5 
     fi
 done

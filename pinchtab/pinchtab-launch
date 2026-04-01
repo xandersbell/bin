@@ -31,7 +31,8 @@ case "$PROFILE" in
 esac
 
 # 1. Profile Existence Pre-check & Auto-creation
-# We fetch the profiles list once to avoid redundant network calls
+# Note: In PinchTab v0.8.x, 'instance start' fails with 404 if the profile doesn't exist.
+# We use the REST API via curl to ensure the profile is registered before launching.
 PROFILES_JSON=$(pinchtab profiles 2>/dev/null)
 PROFILE_EXISTS=$(echo "$PROFILES_JSON" | jq -r ".[] | select(.name==\"$PROFILE\") | .name" 2>/dev/null)
 
