@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Constitutional Rules Compliance (AGENTS.md)
+# Get current local time: $(date "+%Y-%m-%d %H:%M:%S %Z")
+
+# Git Pre-commit Hook: Automated Permission Enforcement
+# This hook ensures all scripts in the repository are executable before they are committed.
+
+# 1. Resolve Project Root
+# This script runs from the repository root by default when triggered by git
+SCRIPT_DIR="$(pwd)"
+
+# 2. Execute Recursive Chmod
+# We ignore hidden files and the README.md
+# We target the root and the first level subdirectories (like pinchtab/)
+find . -maxdepth 2 -type f -not -name "README.md" -not -path '*/.*' -exec chmod +x {} +
+
+# 3. Stage the permission changes
+# 'git add' the currently staged files to ensure the mode changes are included in this commit
+# The --diff-filter=ACM flag ensures we only touch added, copied, or modified files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -n "$STAGED_FILES" ]; then
+    # We must be careful not to re-calculate everything if unnecessary. 
+    # Just re-adding the staged files is enough to capture permission bits.
+    git add $STAGED_FILES
+fi
+
+# Visual feedback via gum
+if command -v gum &> /dev/null; then
+    gum style --foreground "#00FF7F" --bold "🛡️ Git Pre-commit Hook: Permissions Verified & Synchronized"
+fi
+
+exit 0

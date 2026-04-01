@@ -86,6 +86,14 @@ printf "$PATH_CONTENT" | sudo tee "$TARGET_FILE" > /dev/null
 gum style --foreground "#AF87FF" "Ensuring all scripts in $SCRIPT_DIR are executable..."
 find "$SCRIPT_DIR" -maxdepth 2 -type f -not -name "README.md" -not -path '*/.*' -exec chmod +x {} +
 
+# 8. Git Hook Installation (Self-referencing)
+# Ensure the custom githooks directory is active and the hook itself is executable
+if [ -d ".githooks" ]; then
+    gum style --foreground "#AF87FF" "Configuring custom Git hooks path (.githooks)..."
+    chmod +x .githooks/pre-commit
+    git config core.hooksPath .githooks
+fi
+
 if [ $? -eq 0 ]; then
     gum style \
         --foreground "#00FF7F" \
@@ -95,11 +103,12 @@ if [ $? -eq 0 ]; then
         --align center \
         --width 68 \
         --margin "1 0" \
-        "✅ PATH CONFIGURATION SUCCESSFUL" \
+        "✅ CONFIGURATION SUCCESSFUL" \
         "Created: $TARGET_FILE" \
+        "Git Hooks: Active" \
         "" \
         "Please RESTART your terminal session" \
         "or run: source /etc/profile"
 else
-    gum style --foreground "#FF4B4B" --bold "❌ Failed to write path configuration. Please check your permissions."
+    gum style --foreground "#FF4B4B" --bold "❌ Failed to write configuration. Please check your permissions."
 fi
