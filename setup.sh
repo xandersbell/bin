@@ -82,6 +82,10 @@ gum style --foreground "#7A5FFF" "Note: You might be prompted for your sudo pass
 # Use printf and sudo tee to handle newlines correctly and write to protected location
 printf "$PATH_CONTENT" | sudo tee "$TARGET_FILE" > /dev/null
 
+# 7. Ensure all scripts are executable (Recursive)
+gum style --foreground "#AF87FF" "Ensuring all scripts in $SCRIPT_DIR are executable..."
+find "$SCRIPT_DIR" -maxdepth 2 -type f -not -name "README.md" -not -path '*/.*' -exec chmod +x {} +
+
 if [ $? -eq 0 ]; then
     gum style \
         --foreground "#00FF7F" \
