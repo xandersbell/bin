@@ -50,7 +50,22 @@ An interactive dashboard to manage active sessions:
 ---
 
 ## 🛠 Developer & Debugging Tools
-(Future utilities will be documented here.)
+
+### VTT to TXT Converter (`scripts/vtt2txt`)
+Convert WebVTT subtitle files to plain text with a gum-powered TUI interface.
+
+**Usage:**
+```bash
+./scripts/vtt2txt --vtt <input.vtt> --txt <output.txt>
+```
+
+**Features:**
+- Splits multi-line caption blocks into separate lines
+- Auto-creates output directory if it doesn't exist
+- gum TUI with spinner animation and color-coded feedback
+- Error handling for malformed VTT files
+
+**Requirements:** `webvtt-py` (`pip install webvtt-py`)
 
 ## 📋 Requirements
 - [Homebrew](https://brew.sh/)
