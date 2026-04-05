@@ -51,7 +51,7 @@ fi
 # 4. Scanning Subdirectories
 # We ignore hidden directories (starting with .)
 SUBDIRS=()
-while IFS='' read -r line; do SUBDIRS+=("$line"); done < <(find "$SCRIPT_DIR" -maxdepth 1 -type d -not -path "$SCRIPT_DIR" -not -path '*/.*' -exec basename {} \;)
+while IFS='' read -r line; do SUBDIRS+=("$line"); done < <(find "$SCRIPT_DIR" -maxdepth 1 -type d -not -path "$SCRIPT_DIR" -not -path '*/.*' -not -path '*/_*' -exec basename {} \;)
 
 if [ ${#SUBDIRS[@]} -eq 0 ]; then
     gum style --foreground "#EAB308" "⚠️  No valid subdirectories found in $SCRIPT_DIR."

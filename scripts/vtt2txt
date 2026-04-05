@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# VTT to TXT conversion wrapper with gum TUI
+
+# Check if gum is available
+if ! command -v gum &> /dev/null; then
+    echo "Error: gum is not installed. Please run setup.sh first."
+    exit 1
+fi
+
+# Parse arguments
+VTT_PATH=""
+TXT_PATH=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --vtt)
+            VTT_PATH="$2"
+            shift 2
+            ;;
+        --txt)
+            TXT_PATH="$2"
+            shift 2
+            ;;
+        *)
+            gum style --foreground "#FF4B4B" "Unknown option: $1"
+            echo "Usage: $0 --vtt <vtt_file> --txt <output_txt>"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [[ -z "$VTT_PATH" ]]; then
+    gum style --foreground "#FF4B4B" "Error: --vtt is required"
+    echo "Usage: $0 --vtt <vtt_file> --txt <output_txt>"
+    exit 1
+fi
+
+if [[ -z "$TXT_PATH" ]]; then
+    gum style --foreground "#FF4B4B" "Error: --txt is required"
+    echo "Usage: $0 --vtt <vtt_file> --txt <output_txt>"
+    exit 1
+fi
+
+# Validate input file exists
+if [[ ! -f "$VTT_PATH" ]]; then
+    gum style --foreground "#FF4B4B" "Error: VTT file not found: $VTT_PATH"
+    exit 1
+fi
+
+# Resolve absolute path for Python script
+SCRIPT_DIR="${BELL_BIN_PATH:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+PYTHON_SCRIPT="${SCRIPT_DIR}/_scripts/vtt2txt.py"
+
+# Execute conversion
+gum style --foreground "#00D7D7" "Converting VTT to TXT..."
+gum spin --spinner dot --title "Processing..." -- python3 "$PYTHON_SCRIPT" "$VTT_PATH" "$TXT_PATH"
+
+if [[ $? -eq 0 ]]; then
+    gum style --foreground "#00FF7F" --bold "✓ Conversion complete"
+    gum style --foreground "#7A5FFF" "Output: $TXT_PATH"
+else
+    gum style --foreground "#FF4B4B" --bold "✗ Conversion failed"
+    exit 1
+fi
