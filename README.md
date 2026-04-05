@@ -22,6 +22,14 @@ bash setup.sh
 3. **Path Management:** Interactive multi-select TUI to inject chosen directories into `/etc/paths.d/` for global terminal access.
 4. **Git Hooks:** Configures custom `.githooks` for commit validation.
 
+### Environment Variable Setup
+
+Some scripts rely on `BELL_BIN_PATH` pointing to the project root. Add to your shell profile (`.zshrc`, `.bashrc`, etc.):
+
+```bash
+export BELL_BIN_PATH="/Users/ns/codebase/xab/bin"
+```
+
 ---
 
 ## 📦 Code Utilities (`code/`)
@@ -61,21 +69,24 @@ Symlinks for quick access:
 
 ## 🛠 Developer Tools (`scripts/`)
 
-### VTT to TXT Converter (`vtt2txt`)
+### Subtitle to TXT Converters
 
-Convert WebVTT subtitle files to plain text with a gum-powered TUI.
+Convert VTT or SRT subtitle files to plain text with a gum-powered TUI.
 
 ```bash
-./scripts/vtt2txt --vtt <input.vtt> --txt <output.txt>
+vtt2txt --vtt <input.vtt> --txt <output.txt>
+srt2txt --srt <input.srt> --txt <output.txt>
 ```
 
 **Features:**
-- Splits multi-line caption blocks into separate lines
+- Splits multi-line subtitle blocks into separate lines
 - Auto-creates output directory if missing
 - gum TUI with spinner and color-coded feedback
-- Error handling for malformed VTT files
+- Error handling for malformed files
 
-**Requirements:** `webvtt-py` (`pip install webvtt-py`)
+**Requirements:**
+- `webvtt-py` for VTT (`pip install webvtt-py`)
+- `srt` for SRT (`pip install srt`)
 
 ---
 
