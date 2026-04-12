@@ -27,7 +27,7 @@ bash setup.sh
 Some scripts rely on `BELL_BIN_PATH` pointing to the project root. Add to your shell profile (`.zshrc`, `.bashrc`, etc.):
 
 ```bash
-export BELL_BIN_PATH="/Users/ns/codebase/xab/short"
+export BELL_BIN_PATH="/path/to/repo"
 ```
 
 ---
