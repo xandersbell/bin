@@ -51,7 +51,7 @@ Personal tool collection with gum-powered TUI.
 
 ### NAS Mounter
 
-Mount NAS shares via SMB with interactive feedback.
+Mount NAS shares via SMB with interactive feedback. This helps your AI Agent to mount from NAS without triggering system popups or permission dialogs. 
 
 ```bash
 mount-nas <folder_name>
