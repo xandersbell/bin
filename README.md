@@ -1,4 +1,4 @@
-# 🚀 MacOS Personal Bin Ecosystem
+# 🚀 MacOS Personal Shortcuts Ecosystem
 
 A premium, one-stop management repository for personal shell utilities on MacOS, meticulously designed for AI agents and human developers.
 
@@ -27,7 +27,7 @@ bash setup.sh
 Some scripts rely on `BELL_BIN_PATH` pointing to the project root. Add to your shell profile (`.zshrc`, `.bashrc`, etc.):
 
 ```bash
-export BELL_BIN_PATH="/Users/ns/codebase/xab/bin"
+export BELL_BIN_PATH="/Users/ns/codebase/xab/short"
 ```
 
 ---
@@ -42,6 +42,27 @@ Convenience wrappers for AI toolchain management.
 | `claudep` | Launch Claude with elevated permissions (`bypassPermissions`) |
 | `codeu` | Install / update Codex, Gemini CLI, and OpenCode |
 | `ngrok55551` | Start ngrok tunnel on port 55551 |
+
+---
+
+## 🗄️ Mini Utilities (`mini/`)
+
+Personal tool collection with gum-powered TUI.
+
+### NAS Mounter
+
+Mount NAS shares via SMB with interactive feedback.
+
+```bash
+mount-nas <folder_name>
+```
+
+**Prerequisites:**
+- Create `~/.mntrc` with your NAS credentials:
+  ```bash
+  export MOUNT_NAS='//user:password@host'
+  ```
+- NAS shares will be mounted to `~/mnt/<folder_name>`
 
 ---
 
