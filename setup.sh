@@ -26,7 +26,7 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # We prefer the actual user even if the script is run with sudo
 ACTUAL_USER="${SUDO_USER:-$(whoami)}"
-TARGET_FILE="/etc/paths.d/${ACTUAL_USER}-bin"
+TARGET_FILE="/etc/paths.d/${ACTUAL_USER}-shorts"
 
 # Banner
 gum style \
