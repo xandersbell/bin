@@ -12,7 +12,9 @@ fi
 
 # Check if ~/.mntrc exists
 if [ ! -f "$HOME/.mntrc" ]; then
-    gum style --foreground "#FF4B4B" "Error: ~/.mntrc not found. Please create it with MOUNT_NAS environment variable"
+    gum style --foreground "#FF4B4B" "Error: ~/.mntrc not found"
+    gum style --foreground "#7A5FFF" "Please create it with the following format:"
+    gum style --foreground "#00D7D7" "export MOUNT_NAS='//user:password@host'"
     exit 1
 fi
 
