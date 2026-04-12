@@ -1,0 +1,54 @@
+#!/bin/bash
+# Mount NAS folder script
+# Usage: mount-nas <folder_name>
+
+set -e
+
+# Check if gum is available
+if ! command -v gum &> /dev/null; then
+    echo "Error: gum is not installed. Please run setup.sh first."
+    exit 1
+fi
+
+# Check if ~/.mntrc exists
+if [ ! -f "$HOME/.mntrc" ]; then
+    gum style --foreground "#FF4B4B" "Error: ~/.mntrc not found. Please create it with MOUNT_NAS environment variable"
+    exit 1
+fi
+
+# Source environment variables
+source "$HOME/.mntrc"
+
+# Check if MOUNT_NAS is set
+if [ -z "$MOUNT_NAS" ]; then
+    gum style --foreground "#FF4B4B" "Error: MOUNT_NAS is not set. Please check ~/.mntrc configuration"
+    exit 1
+fi
+
+# Parse arguments
+if [ $# -lt 1 ]; then
+    gum style --foreground "#FF4B4B" "Error: folder parameter is required"
+    gum style --foreground "#7A5FFF" "Usage: mount-nas <folder_name>"
+    exit 1
+fi
+
+FOLDER="$1"
+
+MOUNT_POINT="$HOME/mnt/${FOLDER}"
+
+# Check if already mounted
+if mount | grep -q "$MOUNT_POINT"; then
+    gum style --foreground "#00D7D7" "${FOLDER} is already mounted at ${MOUNT_POINT}"
+    exit 0
+fi
+
+# Create directory if not exists
+if [ ! -d "$MOUNT_POINT" ]; then
+    mkdir -p "$MOUNT_POINT"
+fi
+
+# Mount
+gum style --foreground "#00D7D7" "Mounting ${FOLDER} to ${MOUNT_POINT}..."
+mount_smbfs "${MOUNT_NAS}/${FOLDER}" "$MOUNT_POINT"
+
+gum style --foreground "#00FF7F" --bold "✓ ${FOLDER} mounted successfully"
