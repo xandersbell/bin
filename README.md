@@ -17,6 +17,7 @@ bash setup.sh
 ```
 
 **What `setup.sh` does:**
+
 1. **Dependency Check:** Installs `homebrew` and `gum` if missing.
 2. **Interactive Configuration:** Detects current tool subdirectories (excluding `_` prefixed private scripts).
 3. **Path Management:** Interactive multi-select TUI to inject chosen directories into `/etc/paths.d/` for global terminal access.
@@ -36,12 +37,12 @@ export BELL_BIN_PATH="/path/to/repo"
 
 Convenience wrappers for AI toolchain management.
 
-| Script | Description |
-|--------|-------------|
-| `claudeu` | Install / update Claude CLI |
-| `claudep` | Launch Claude with elevated permissions (`bypassPermissions`) |
-| `codeu` | Install / update Codex, Gemini CLI, and OpenCode |
-| `ngrok55551` | Start ngrok tunnel on port 55551 |
+| Script       | Description                                                   |
+| ------------ | ------------------------------------------------------------- |
+| `claudeu`    | Install / update Claude CLI                                   |
+| `claudep`    | Launch Claude with elevated permissions (`bypassPermissions`) |
+| `codeu`      | Install / update Codex, Gemini CLI, and OpenCode              |
+| `ngrok55551` | Start ngrok tunnel on port 55551                              |
 
 ---
 
@@ -51,13 +52,14 @@ Personal tool collection with gum-powered TUI.
 
 ### NAS Mounter
 
-Mount NAS shares via SMB with interactive feedback. This helps your AI Agent to mount from NAS without triggering system popups or permission dialogs. 
+Mount NAS shares via SMB with interactive feedback. This helps your AI Agent to mount from NAS without triggering system popups or permission dialogs.
 
 ```bash
 mount-nas <folder_name>
 ```
 
 **Prerequisites:**
+
 - Create `~/.mntrc` with your NAS credentials:
   ```bash
   export MOUNT_NAS='//user:password@host'
@@ -72,17 +74,18 @@ Browser instance management suite for [PinchTab](https://pinchtab.com).
 
 ### Core Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pinchtab-start` | Launch and provision browser instances |
+| Script             | Description                                     |
+| ------------------ | ----------------------------------------------- |
+| `pinchtab-start`   | Launch and provision browser instances          |
 | `pinchtab-cleanup` | Interactive dashboard to manage active sessions |
-| `pinchtab-general` | Launch general-purpose profile (Port 19950) |
-| `pinchtab-ask` | Launch AI assistant profile (Port 19951) |
-| `pinchtab-youtube` | Launch YouTube-optimized profile (Port 19952) |
+| `pinchtab-general` | Launch general-purpose profile (Port 19950)     |
+| `pinchtab-ask`     | Launch AI assistant profile (Port 19951)        |
+| `pinchtab-youtube` | Launch YouTube-optimized profile (Port 19952)   |
 
 ### Shortcuts (`pinchtab-shortcut/`)
 
 Symlinks for quick access:
+
 - `pts` → `pinchtab-start`
 - `ptcleanup` → `pinchtab-cleanup`
 
@@ -100,14 +103,40 @@ srt2txt --srt <input.srt> --txt <output.txt>
 ```
 
 **Features:**
+
 - Splits multi-line subtitle blocks into separate lines
 - Auto-creates output directory if missing
 - gum TUI with spinner and color-coded feedback
 - Error handling for malformed files
 
 **Requirements:**
+
 - `webvtt-py` for VTT (`pip install webvtt-py`)
 - `srt` for SRT (`pip install srt`)
+
+---
+
+## 🔧 Hermes Toolchain (`hermes/`)
+
+Manage Hermes Agent gateway launchd services with a gum-powered TUI.
+
+```bash
+hermes-gateway           # → pick action, then pick profile(s)
+hermes-gateway <profile> # → pick action, then operate on that profile
+```
+
+**Actions:** `restart` / `start` / `stop` / `install` / `uninstall`
+
+**Profiles:** Supports `default` and named profiles under `~/.hermes/profiles/`
+
+**Plist Filtering:**
+
+- `install` → only shows profiles **without** a plist file (profiles not yet installed)
+- other actions → only shows profiles **with** a plist file (installed services)
+
+| Script            | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| `hermes-gateway` | Manage Hermes gateway launchd services (TUI)     |
 
 ---
 
