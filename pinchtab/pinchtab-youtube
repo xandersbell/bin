@@ -1,2 +1,2 @@
 #!/bin/bash
-PINCHTAB_SERVER=http://localhost:19952 pinchtab "$@"
+pinchtab --server http://localhost:19952 "$@"
