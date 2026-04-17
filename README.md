@@ -37,12 +37,12 @@ export BELL_BIN_PATH="/path/to/repo"
 
 Convenience wrappers for AI toolchain management.
 
-| Script       | Description                                                   |
-| ------------ | ------------------------------------------------------------- |
-| `claudeu`    | Install / update Claude CLI                                   |
-| `claudep`    | Launch Claude with elevated permissions (`bypassPermissions`) |
-| `codeu`      | Install / update Codex, Gemini CLI, and OpenCode              |
-| `ngrok55551` | Start ngrok tunnel on port 55551                              |
+```bash
+claudeu            # Install / update Claude CLI
+claudep            # Launch Claude with elevated permissions (bypassPermissions)
+codeu              # Install / update Codex, Gemini CLI, and OpenCode
+ngrok55551         # Start ngrok tunnel on port 55551
+```
 
 ---
 
@@ -74,13 +74,13 @@ Browser instance management suite for [PinchTab](https://pinchtab.com).
 
 ### Core Scripts
 
-| Script             | Description                                     |
-| ------------------ | ----------------------------------------------- |
-| `pinchtab-start`   | Launch and provision browser instances          |
-| `pinchtab-cleanup` | Interactive dashboard to manage active sessions |
-| `pinchtab-general` | Launch general-purpose profile (Port 19950)     |
-| `pinchtab-ask`     | Launch AI assistant profile (Port 19951)        |
-| `pinchtab-youtube` | Launch YouTube-optimized profile (Port 19952)   |
+```bash
+pinchtab-start     # Launch and provision browser instances
+pinchtab-cleanup   # Interactive dashboard to manage active sessions
+pinchtab-general   # Launch general-purpose profile (Port 19950)
+pinchtab-ask       # Launch AI assistant profile (Port 19951)
+pinchtab-youtube   # Launch YouTube-optimized profile (Port 19952)
+```
 
 ### Shortcuts (`pinchtab-shortcut/`)
 
@@ -93,9 +93,7 @@ Symlinks for quick access:
 
 ## 🛠 Developer Tools (`scripts/`)
 
-### Subtitle to TXT Converters
-
-Convert VTT or SRT subtitle files to plain text with a gum-powered TUI.
+Convert subtitle files to plain text with a gum-powered TUI.
 
 ```bash
 vtt2txt --vtt <input.vtt> --txt <output.txt>
@@ -121,8 +119,8 @@ srt2txt --srt <input.srt> --txt <output.txt>
 Manage Hermes Agent gateway launchd services with a gum-powered TUI.
 
 ```bash
-hermes-gateway           # → pick action, then pick profile(s)
-hermes-gateway <profile> # → pick action, then operate on that profile
+hermes-gateway           # pick action, then pick profile(s)
+hermes-gateway <profile> # pick action, then operate on that profile
 ```
 
 **Actions:** `restart` / `start` / `stop` / `install` / `uninstall`
@@ -133,10 +131,6 @@ hermes-gateway <profile> # → pick action, then operate on that profile
 
 - `install` → only shows profiles **without** a plist file (profiles not yet installed)
 - other actions → only shows profiles **with** a plist file (installed services)
-
-| Script            | Description                                       |
-| ----------------- | ------------------------------------------------- |
-| `hermes-gateway` | Manage Hermes gateway launchd services (TUI)     |
 
 ---
 
