@@ -1,10 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Hermes Gateway Management Script
-# Usage: hermes-gateway [action] [profile]
-#   Without args:         interactive — select action then profile
-#   With action only:     interactive profile picker
-#   With action + profile: direct execution
+# Usage: hermes-gateway [profile]
+#   hermes-gateway           → pick action, then pick profile(s)
+#   hermes-gateway <profile> → pick action, then operate on that profile
 
 set -e
 
@@ -183,18 +182,18 @@ execute_on_selected() {
 
         if [[ "$item" == "[ default ]" ]]; then
             case "$action" in
-                restart)  op_restart "default" "yes" ;;
-                start)    op_start "default" "yes" ;;
-                stop)     op_stop "default" "yes" ;;
-                install)  op_install "default" "yes" ;;
+                restart)   op_restart "default" "yes" ;;
+                start)     op_start "default" "yes" ;;
+                stop)      op_stop "default" "yes" ;;
+                install)   op_install "default" "yes" ;;
                 uninstall) op_uninstall "default" "yes" ;;
             esac
         else
             case "$action" in
-                restart)  op_restart "$item" "no" ;;
-                start)    op_start "$item" "no" ;;
-                stop)     op_stop "$item" "no" ;;
-                install)  op_install "$item" "no" ;;
+                restart)   op_restart "$item" "no" ;;
+                start)     op_start "$item" "no" ;;
+                stop)      op_stop "$item" "no" ;;
+                install)   op_install "$item" "no" ;;
                 uninstall) op_uninstall "$item" "no" ;;
             esac
         fi
@@ -228,7 +227,7 @@ execute_on_selected() {
     fi
 }
 
-# ── Execute Single Profile ────────────────────────────────────────────────────
+# ── Execute Action on Single Profile ─────────────────────────────────────────
 
 execute_one() {
     local action="$1"
@@ -236,27 +235,21 @@ execute_one() {
 
     if [[ "$profile" == "default" ]]; then
         case "$action" in
-            restart)  op_restart "default" "yes" ;;
-            start)    op_start "default" "yes" ;;
-            stop)     op_stop "default" "yes" ;;
-            install)  op_install "default" "yes" ;;
+            restart)   op_restart "default" "yes" ;;
+            start)     op_start "default" "yes" ;;
+            stop)      op_stop "default" "yes" ;;
+            install)   op_install "default" "yes" ;;
             uninstall) op_uninstall "default" "yes" ;;
         esac
     else
         case "$action" in
-            restart)  op_restart "$profile" "no" ;;
-            start)    op_start "$profile" "no" ;;
-            stop)     op_stop "$profile" "no" ;;
-            install)  op_install "$profile" "no" ;;
+            restart)   op_restart "$profile" "no" ;;
+            start)     op_start "$profile" "no" ;;
+            stop)      op_stop "$profile" "no" ;;
+            install)   op_install "$profile" "no" ;;
             uninstall) op_uninstall "$profile" "no" ;;
         esac
     fi
-}
-
-# ── Validate Action ──────────────────────────────────────────────────────────
-
-is_valid_action() {
-    [[ "$1" =~ ^(restart|start|stop|install|uninstall)$ ]]
 }
 
 # ── Banner ───────────────────────────────────────────────────────────────────
@@ -276,11 +269,10 @@ show_banner() {
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-ACTION="$1"
-PROFILE="$2"
+PROFILE="$1"
 
-if [[ -z "$ACTION" ]]; then
-    # ── No args: pick action then profile ──────────────────────────────────
+if [[ -z "$PROFILE" ]]; then
+    # ── No args: pick action then profile(s) ───────────────────────────────
     gum style \
         --foreground "#00D7D7" \
         --border rounded \
@@ -309,35 +301,59 @@ if [[ -z "$ACTION" ]]; then
     show_banner
     execute_on_selected "$ACTION"
 
-elif [[ -z "$PROFILE" ]]; then
-    # ── Action only: pick profile ───────────────────────────────────────────
-    if ! is_valid_action "$ACTION"; then
-        gum style --foreground "#FF4B4B" "Error: Invalid action '$ACTION'"
-        echo "Valid actions: restart, start, stop, install, uninstall"
-        exit 1
-    fi
-
-    if [[ "$ACTION" == "install" ]]; then
-        FILTER="without_plist"
-    else
-        FILTER="with_plist"
-    fi
-
-    pick_profiles "$FILTER"
-    show_banner
-    execute_on_selected "$ACTION"
-
 else
-    # ── Action + profile: direct execution ────────────────────────────────────
-    if ! is_valid_action "$ACTION"; then
-        gum style --foreground "#FF4B4B" "Error: Invalid action '$ACTION'"
-        echo "Valid actions: restart, start, stop, install, uninstall"
-        exit 1
+    # ── Profile arg: pick action, then operate on that profile ──────────────
+    validate_profile "$PROFILE"
+
+    gum style \
+        --foreground "#00D7D7" \
+        --border rounded \
+        --border-foreground "#00D7D7" \
+        --padding "1 2" \
+        --align center \
+        --width 68 \
+        --margin "1 0" \
+        "🔧 Hermes Gateway Manager" \
+        "Profile: $PROFILE"
+
+    ACTION=$(printf "restart\nstart\nstop\ninstall\nuninstall" | gum choose)
+
+    if [[ -z "$ACTION" ]]; then
+        gum style --foreground "#FF4B4B" "No action selected. Aborted."
+        exit 0
     fi
 
-    validate_profile "$PROFILE"
-    show_banner
+    # For install, validate the profile doesn't have plist yet
+    if [[ "$ACTION" == "install" ]]; then
+        if [[ "$PROFILE" == "default" ]]; then
+            if has_default_plist; then
+                gum style --foreground "#FF4B4B" "Error: default gateway already installed."
+                exit 1
+            fi
+        else
+            if has_plist "$PROFILE"; then
+                gum style --foreground "#FF4B4B" "Error: $PROFILE gateway already installed."
+                exit 1
+            fi
+        fi
+    fi
 
+    # For other actions, validate plist exists
+    if [[ "$ACTION" != "install" ]]; then
+        if [[ "$PROFILE" == "default" ]]; then
+            if ! has_default_plist; then
+                gum style --foreground "#FF4B4B" "Error: default gateway not installed."
+                exit 1
+            fi
+        else
+            if ! has_plist "$PROFILE"; then
+                gum style --foreground "#FF4B4B" "Error: $PROFILE gateway not installed."
+                exit 1
+            fi
+        fi
+    fi
+
+    gum style --foreground "#00D7D7" "Action: $ACTION"
     execute_one "$ACTION" "$PROFILE"
 
     if [[ $? -eq 0 ]]; then
