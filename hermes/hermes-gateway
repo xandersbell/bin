@@ -1,0 +1,349 @@
+#!/bin/bash
+
+# Hermes Gateway Management Script
+# Usage: hermes-gateway [action] [profile]
+#   Without args:         interactive — select action then profile
+#   With action only:     interactive profile picker
+#   With action + profile: direct execution
+
+set -e
+
+HERMES_PROFILES_DIR="$HOME/.hermes/profiles"
+LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+
+if ! command -v gum &> /dev/null; then
+    echo "Error: gum is not installed. Please run setup.sh first."
+    exit 1
+fi
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+has_plist() {
+    [[ -f "$LAUNCH_AGENTS_DIR/ai.hermes.gateway-$1.plist" ]]
+}
+
+has_default_plist() {
+    [[ -f "$LAUNCH_AGENTS_DIR/ai.hermes.gateway.plist" ]]
+}
+
+validate_profile() {
+    local profile="$1"
+    if [[ "$profile" == "default" ]]; then
+        return 0
+    fi
+    if [[ ! -d "$HERMES_PROFILES_DIR/$profile" ]]; then
+        gum style --foreground "#FF4B4B" "Error: Profile '$profile' does not exist."
+        exit 1
+    fi
+}
+
+# ── Gateway Operations ───────────────────────────────────────────────────────
+
+op_restart() {
+    local profile="$1"
+    local is_default="$2"
+    gum style --foreground "#00D7D7" "Restarting gateway: $profile"
+    if [[ "$is_default" == "yes" ]]; then
+        hermes gateway restart 2>&1
+    else
+        hermes -p "$profile" gateway restart 2>&1
+    fi
+}
+
+op_start() {
+    local profile="$1"
+    local is_default="$2"
+    gum style --foreground "#00D7D7" "Starting gateway: $profile"
+    if [[ "$is_default" == "yes" ]]; then
+        hermes gateway start 2>&1
+    else
+        hermes -p "$profile" gateway start 2>&1
+    fi
+}
+
+op_stop() {
+    local profile="$1"
+    local is_default="$2"
+    gum style --foreground "#00D7D7" "Stopping gateway: $profile"
+    if [[ "$is_default" == "yes" ]]; then
+        hermes gateway stop 2>&1
+    else
+        hermes -p "$profile" gateway stop 2>&1
+    fi
+}
+
+op_install() {
+    local profile="$1"
+    local is_default="$2"
+    gum style --foreground "#00D7D7" "Installing gateway: $profile"
+    if [[ "$is_default" == "yes" ]]; then
+        hermes gateway install 2>&1
+    else
+        hermes -p "$profile" gateway install 2>&1
+    fi
+}
+
+op_uninstall() {
+    local profile="$1"
+    local is_default="$2"
+    gum style --foreground "#00D7D7" "Uninstalling gateway: $profile"
+    if [[ "$is_default" == "yes" ]]; then
+        hermes gateway uninstall 2>&1
+    else
+        hermes -p "$profile" gateway uninstall 2>&1
+    fi
+}
+
+# ── Build Profile Options ────────────────────────────────────────────────────
+
+build_options() {
+    local filter="$1"  # "with_plist" or "without_plist"
+
+    NAMED_PROFILES=()
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        local has_p
+        has_plist "$line" && has_p="yes" || has_p="no"
+
+        if [[ "$filter" == "with_plist" && "$has_p" == "yes" ]]; then
+            NAMED_PROFILES+=("$line")
+        elif [[ "$filter" == "without_plist" && "$has_p" == "no" ]]; then
+            NAMED_PROFILES+=("$line")
+        fi
+    done < <(ls -1 "$HERMES_PROFILES_DIR" | grep -v -E '^\.|DS_Store' || true)
+
+    local default_plist
+    has_default_plist && default_plist="yes" || default_plist="no"
+
+    if [[ "$filter" == "with_plist" && "$default_plist" == "yes" ]]; then
+        DEFAULT_IN_OPTIONS="yes"
+    else
+        DEFAULT_IN_OPTIONS="no"
+    fi
+
+    if [[ ${#NAMED_PROFILES[@]} -eq 0 ]] && [[ "$DEFAULT_IN_OPTIONS" != "yes" ]]; then
+        if [[ "$filter" == "with_plist" ]]; then
+            gum style --foreground "#EAB308" "No installed profiles found"
+        else
+            gum style --foreground "#EAB308" "No uninstalled profiles found"
+        fi
+        exit 0
+    fi
+
+    # Sort named profiles alphabetically
+    SORTED=()
+    while IFS= read -r line; do
+        SORTED+=("$line")
+    done < <(printf '%s\n' "${NAMED_PROFILES[@]}" | sort)
+
+    # Build OPTIONS: [ ALL ], [ default ] (conditional), then sorted profiles
+    OPTIONS=("[ ALL ]")
+    [[ "$DEFAULT_IN_OPTIONS" == "yes" ]] && OPTIONS+=("[ default ]")
+    OPTIONS+=("${SORTED[@]}")
+}
+
+# ── Interactive Profile Picker ────────────────────────────────────────────────
+
+pick_profiles() {
+    local filter="$1"  # "with_plist" or "without_plist"
+
+    build_options "$filter"
+
+    echo "$(gum style --foreground "#AF87FF" "Choose profiles (Space to toggle, Enter to confirm):")"
+    SELECTED=$(printf "%s\n" "${OPTIONS[@]}" | gum choose --no-limit)
+
+    if [[ -z "$SELECTED" ]]; then
+        gum style --foreground "#FF4B4B" "No profiles selected. Aborted."
+        exit 0
+    fi
+
+    # Handle ALL
+    if [[ "$SELECTED" == *"[ ALL ]"* ]]; then
+        SELECTED=""
+        [[ "$DEFAULT_IN_OPTIONS" == "yes" ]] && SELECTED+="[ default ]"$'\n'
+        printf -v SELECTED "%s%s\n" "$SELECTED" "$(printf '%s\n' "${NAMED_PROFILES[@]}")"
+        if [[ "$filter" == "with_plist" ]]; then
+            gum style --foreground "#00D7D7" "All installed profiles selected"
+        else
+            gum style --foreground "#00D7D7" "All uninstalled profiles selected"
+        fi
+    fi
+}
+
+# ── Execute Action on Selected Profiles ──────────────────────────────────────
+
+execute_on_selected() {
+    local action="$1"
+
+    FAILED=0
+    while IFS= read -r item; do
+        [[ -z "$item" ]] && continue
+
+        if [[ "$item" == "[ default ]" ]]; then
+            case "$action" in
+                restart)  op_restart "default" "yes" ;;
+                start)    op_start "default" "yes" ;;
+                stop)     op_stop "default" "yes" ;;
+                install)  op_install "default" "yes" ;;
+                uninstall) op_uninstall "default" "yes" ;;
+            esac
+        else
+            case "$action" in
+                restart)  op_restart "$item" "no" ;;
+                start)    op_start "$item" "no" ;;
+                stop)     op_stop "$item" "no" ;;
+                install)  op_install "$item" "no" ;;
+                uninstall) op_uninstall "$item" "no" ;;
+            esac
+        fi
+
+        if [[ $? -ne 0 ]]; then
+            ((FAILED++))
+        fi
+        echo ""
+    done <<< "$SELECTED"
+
+    # Summary
+    if [[ $FAILED -eq 0 ]]; then
+        gum style \
+            --foreground "#00FF7F" \
+            --border rounded \
+            --border-foreground "#00FF7F" \
+            --padding "1 2" \
+            --align center \
+            --width 40 \
+            "✅ Done — all $action succeeded"
+    else
+        gum style \
+            --foreground "#FF4B4B" \
+            --border rounded \
+            --border-foreground "#FF4B4B" \
+            --padding "1 2" \
+            --align center \
+            --width 40 \
+            "⚠️  $FAILED $action(s) failed"
+        exit 1
+    fi
+}
+
+# ── Execute Single Profile ────────────────────────────────────────────────────
+
+execute_one() {
+    local action="$1"
+    local profile="$2"
+
+    if [[ "$profile" == "default" ]]; then
+        case "$action" in
+            restart)  op_restart "default" "yes" ;;
+            start)    op_start "default" "yes" ;;
+            stop)     op_stop "default" "yes" ;;
+            install)  op_install "default" "yes" ;;
+            uninstall) op_uninstall "default" "yes" ;;
+        esac
+    else
+        case "$action" in
+            restart)  op_restart "$profile" "no" ;;
+            start)    op_start "$profile" "no" ;;
+            stop)     op_stop "$profile" "no" ;;
+            install)  op_install "$profile" "no" ;;
+            uninstall) op_uninstall "$profile" "no" ;;
+        esac
+    fi
+}
+
+# ── Validate Action ──────────────────────────────────────────────────────────
+
+is_valid_action() {
+    [[ "$1" =~ ^(restart|start|stop|install|uninstall)$ ]]
+}
+
+# ── Banner ───────────────────────────────────────────────────────────────────
+
+show_banner() {
+    gum style \
+        --foreground "#00D7D7" \
+        --border rounded \
+        --border-foreground "#00D7D7" \
+        --padding "1 2" \
+        --align center \
+        --width 68 \
+        --margin "1 0" \
+        "🔧 Hermes Gateway Manager" \
+        "Action: $ACTION"
+}
+
+# ── Main ─────────────────────────────────────────────────────────────────────
+
+ACTION="$1"
+PROFILE="$2"
+
+if [[ -z "$ACTION" ]]; then
+    # ── No args: pick action then profile ──────────────────────────────────
+    gum style \
+        --foreground "#00D7D7" \
+        --border rounded \
+        --border-foreground "#00D7D7" \
+        --padding "1 2" \
+        --align center \
+        --width 68 \
+        --margin "1 0" \
+        "🔧 Hermes Gateway Manager"
+
+    ACTION=$(printf "restart\nstart\nstop\ninstall\nuninstall" | gum choose)
+
+    if [[ -z "$ACTION" ]]; then
+        gum style --foreground "#FF4B4B" "No action selected. Aborted."
+        exit 0
+    fi
+
+    # Determine plist filter
+    if [[ "$ACTION" == "install" ]]; then
+        FILTER="without_plist"
+    else
+        FILTER="with_plist"
+    fi
+
+    pick_profiles "$FILTER"
+    show_banner
+    execute_on_selected "$ACTION"
+
+elif [[ -z "$PROFILE" ]]; then
+    # ── Action only: pick profile ───────────────────────────────────────────
+    if ! is_valid_action "$ACTION"; then
+        gum style --foreground "#FF4B4B" "Error: Invalid action '$ACTION'"
+        echo "Valid actions: restart, start, stop, install, uninstall"
+        exit 1
+    fi
+
+    if [[ "$ACTION" == "install" ]]; then
+        FILTER="without_plist"
+    else
+        FILTER="with_plist"
+    fi
+
+    pick_profiles "$FILTER"
+    show_banner
+    execute_on_selected "$ACTION"
+
+else
+    # ── Action + profile: direct execution ────────────────────────────────────
+    if ! is_valid_action "$ACTION"; then
+        gum style --foreground "#FF4B4B" "Error: Invalid action '$ACTION'"
+        echo "Valid actions: restart, start, stop, install, uninstall"
+        exit 1
+    fi
+
+    validate_profile "$PROFILE"
+    show_banner
+
+    execute_one "$ACTION" "$PROFILE"
+
+    if [[ $? -eq 0 ]]; then
+        gum style --foreground "#00FF7F" "✅ $ACTION on '$PROFILE' succeeded"
+    else
+        gum style --foreground "#FF4B4B" "❌ $ACTION on '$PROFILE' failed"
+        exit 1
+    fi
+fi
