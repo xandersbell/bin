@@ -111,7 +111,7 @@ build_options() {
         elif [[ "$filter" == "without_plist" && "$has_p" == "no" ]]; then
             NAMED_PROFILES+=("$line")
         fi
-    done < <(ls -1 "$HERMES_PROFILES_DIR" | grep -v -E '^\.|DS_Store' || true)
+    done < <(ls -1d "$HERMES_PROFILES_DIR"/*/ 2>/dev/null | xargs -n1 basename || true)
 
     local default_plist
     has_default_plist && default_plist="yes" || default_plist="no"
