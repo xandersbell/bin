@@ -1,2 +1,2 @@
 #!/bin/bash
-OPENCLI_CDP_ENDPOINT="http://localhost:19222" opencli "$@"
+OPENCLI_WINDOW_FOCUSED=1 OPENCLI_CDP_ENDPOINT="http://localhost:19222" opencli "$@"
