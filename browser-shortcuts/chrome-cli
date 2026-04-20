@@ -1,0 +1,2 @@
+#!/bin/bash
+OPENCLI_CDP_ENDPOINT="http://localhost:19222" opencli "$@"

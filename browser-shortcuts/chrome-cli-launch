@@ -1,0 +1,2 @@
+#!/bin/bash
+open -na "Google Chrome" --args --remote-debugging-port=19222 --user-data-dir="$HOME/chrome/open-cli"
